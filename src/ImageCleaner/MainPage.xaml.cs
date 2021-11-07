@@ -26,57 +26,8 @@ namespace ImageCleaner
     public sealed partial class MainPage : Page
     {
         const string cPickerFolder = "PickedFolderToken";
-        public MainPage()
-        {
-            this.InitializeComponent();
-        }
 
-        private async void BtnSelectFolder_Click(object sender, RoutedEventArgs e)
-        {
-            var folderPicker = new Windows.Storage.Pickers.FolderPicker();
-            folderPicker.SuggestedStartLocation = Windows.Storage.Pickers.PickerLocationId.Desktop;
-            folderPicker.FileTypeFilter.Add("*");
-
-            Windows.Storage.StorageFolder folder = await folderPicker.PickSingleFolderAsync();
-            if (folder != null)
-            {
-                // Application now has read/write access to all contents in the picked folder
-                // (including other sub-folder contents)
-                StorageApplicationPermissions.FutureAccessList.AddOrReplace(cPickerFolder, folder);
-                this.TxtSelectedFolder.Text = folder.Path;
-            }
-            else
-            {
-                this.TxtSelectedFolder.Text = "Operation cancelled.";
-            }
-        }
-
-        private async void BtnStart_Click(object sender, RoutedEventArgs e)
-        {
-            var folderPath = TxtSelectedFolder.Text;
-            bool includeSubfolders = ChkIncludeSubfolders.IsChecked ?? false;
-
-            //StorageApplicationPermissions.FutureAccessList.
-            //if (!Directory.Exists(folderPath))
-            //{
-            //    DisplayFolderNotFoundAsync();
-
-            //    return;
-            //}
-
-            if (!StorageApplicationPermissions.FutureAccessList.ContainsItem(cPickerFolder))
-            {
-                DisplayNoAccessDialogAsync();
-
-                return;
-            }
-
-            var jpgExtensions = new[] { ".jpg" };
-            
-
-            var jpgFiles = await GetFilesAsync(jpgExtensions, includeSubfolders);
-
-            var rawExtensions = new[] { ".3fr",
+        string[] rawExtensions = new[] { ".3fr",
 ".ari", ".arw",
 ".bay",
 ".braw", ".crw", ".cr2", ".cr3",
@@ -97,11 +48,61 @@ namespace ImageCleaner
 ".tif",
 ".x3f" };
 
+        string[] jpgExtensions = new[] { ".jpg" };
+
+        public MainPage()
+        {
+            this.InitializeComponent();
+        }
+
+        private async void BtnSelectFolder_Click(object sender, RoutedEventArgs e)
+        {
+            var folderPicker = new Windows.Storage.Pickers.FolderPicker();
+            folderPicker.SuggestedStartLocation = Windows.Storage.Pickers.PickerLocationId.Desktop;
+            folderPicker.FileTypeFilter.Add("*");
+
+            StorageFolder folder = await folderPicker.PickSingleFolderAsync();
+
+            if (folder != null)
+            {
+                // Application now has read/write access to all contents in the picked folder
+                // (including other sub-folder contents)
+                StorageApplicationPermissions.FutureAccessList.AddOrReplace(cPickerFolder, folder);
+                this.TxtSelectedFolder.Text = folder.Path;
+            }
+            else
+            {
+                this.TxtSelectedFolder.Text = "Operation cancelled.";
+            }
+        }
+
+        private async void BtnStart_Click(object sender, RoutedEventArgs e)
+        {
+            bool includeSubfolders = ChkIncludeSubfolders.IsChecked ?? false;
+
+            if (!StorageApplicationPermissions.FutureAccessList.ContainsItem(cPickerFolder))
+            {
+                DisplayNoAccessDialogAsync();
+
+                return;
+            }
+
+            var jpgFiles = await GetFilesAsync(jpgExtensions, includeSubfolders);
+
             var rawFiles = await GetFilesAsync(rawExtensions, includeSubfolders);
 
             var filesToDelete = GetRawFilesWhereJpgIsMissing(rawFiles, jpgFiles);
 
-            LstItemsToDelete.ItemsSource = filesToDelete;
+            if (filesToDelete.Count() == 0)
+            {
+                DisplayNoFilesFoundDialogAsync();
+                LstItemsToDelete.ItemsSource = null;
+                return;
+            }
+            else
+            {
+                LstItemsToDelete.ItemsSource = filesToDelete;
+            }
         }
 
         private IEnumerable<StorageFile> GetRawFilesWhereJpgIsMissing(IEnumerable<StorageFile> rawFiles, IEnumerable<StorageFile> jpgFiles)
@@ -164,6 +165,18 @@ namespace ImageCleaner
             await noWifiDialog.ShowAsync();
         }
 
+        private async void DisplayNoFilesFoundDialogAsync()
+        {
+            ContentDialog noWifiDialog = new ContentDialog()
+            {
+                Title = "No files found",
+                Content = "No matching files found. You are good to go!",
+                CloseButtonText = "Ok"
+            };
+
+            await noWifiDialog.ShowAsync();
+        }
+
         private async void DisplayNoAccessDialogAsync()
         {
             ContentDialog noWifiDialog = new ContentDialog()
@@ -184,12 +197,27 @@ namespace ImageCleaner
                 {
                     await (item as StorageFile).DeleteAsync();
                 }
+
+                LstItemsToDelete.ItemsSource = null;
             }
         }
 
         private void BtnSelectAll_Click(object sender, RoutedEventArgs e)
         {
-            LstItemsToDelete.SelectAll();
+            if (LstItemsToDelete.SelectionMode == ListViewSelectionMode.Multiple ||
+    LstItemsToDelete.SelectionMode == ListViewSelectionMode.Extended)
+            {
+                LstItemsToDelete.SelectAll();
+            }
+        }
+
+        private void BtnClear_Click(object sender, RoutedEventArgs e)
+        {
+            if (LstItemsToDelete.SelectionMode == ListViewSelectionMode.Multiple ||
+   LstItemsToDelete.SelectionMode == ListViewSelectionMode.Extended)
+            {
+                LstItemsToDelete.DeselectRange(new ItemIndexRange(0, (uint)LstItemsToDelete.Items.Count));
+            }
         }
     }
 }

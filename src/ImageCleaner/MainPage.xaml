@@ -11,8 +11,8 @@
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="*"/>
-            <RowDefinition Height="*"/>
-            <RowDefinition Height="*"/>
+            <RowDefinition Height="6*"/>
+            <RowDefinition Height="2*"/>
         </Grid.RowDefinitions>
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="*"/>
@@ -20,29 +20,34 @@
         </Grid.ColumnDefinitions>
         <TextBlock TextWrapping="WrapWholeWords" Height="200" FontSize="30" Grid.Row="0" Grid.ColumnSpan="2">
                 This tool finds all RAW images in a specific folder and checks if for every RAW image there is a JPG file.
-                <LineBreak/>
                 If not it will propose the RAW file for deletion.
         </TextBlock>
-        <StackPanel Orientation="Horizontal" Grid.Row="1" Grid.Column="0">
-            <Button Content="Select Folder" Margin="0,0,50,0" Name="BtnSelectFolder" Click="BtnSelectFolder_Click"></Button>
-        <TextBox Name="TxtSelectedFolder" MaxHeight="50" Width="300" MaxWidth="500"></TextBox>
+        <StackPanel Grid.Row="1" Grid.Column="0" Margin="50">
+            <Button Content="Select Folder"  Name="BtnSelectFolder" Click="BtnSelectFolder_Click"></Button>
+            <TextBox Name="TxtSelectedFolder" MaxHeight="50"></TextBox>
+            <CheckBox Name="ChkIncludeSubfolders" Margin="50,0,0,0" Content="Include Sub folders"></CheckBox>
+            <Button Name="BtnStart" Click="BtnStart_Click" Content="Start" HorizontalAlignment="Right" Margin="0,0,50,0"></Button>
         </StackPanel>
-        <StackPanel Orientation="Horizontal" Grid.Row="2" Grid.Column="0">
-            <CheckBox Name="ChkIncludeSubfolders" Margin="0,0,50,0" Content="Include Sub folders"></CheckBox>
-            <Button Name="BtnStart" Click="BtnStart_Click" Content="Start"></Button>
-        </StackPanel>
-        <StackPanel Grid.Row="1" Grid.RowSpan="2" Grid.Column="1">
-            <Button Content="Select All" Name="BtnSelectAll" Click="BtnSelectAll_Click"></Button>
-            <ListView  Name="LstItemsToDelete" IsMultiSelectCheckBoxEnabled="True" Header="Raw files">
+        <Grid BorderThickness="1" Grid.Row="1" Grid.RowSpan="2" Grid.Column="1">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="2*"/>
+                <ColumnDefinition Width="*"/>
+            </Grid.ColumnDefinitions>
+            <StackPanel Grid.Row="0" Grid.Column="1"  >
+                <Button Content="Select All" Name="BtnSelectAll" HorizontalAlignment="Center" Margin="0,10,0,0" Click="BtnSelectAll_Click"></Button>
+                <Button Content="Clear" Name="BtnClear" HorizontalAlignment="Center" Margin="0,10,0,0" Click="BtnClear_Click"></Button>
+                <Button Name="BtnDelete" HorizontalAlignment="Left" Margin="10,50,0,0" Content="Delete" Click="BtnDelete_Click"/>
+            </StackPanel>
+            <ListView BorderThickness="1" Grid.Column="0" Name="LstItemsToDelete" IsMultiSelectCheckBoxEnabled="True" Header="Results" SelectionMode="Multiple">
                 <ListView.ItemTemplate>
                     <DataTemplate>
-                    <StackPanel Orientation="Horizontal">
-                        <TextBlock Text="{Binding Name}"></TextBlock>
-                    </StackPanel>
-                </DataTemplate>
-            </ListView.ItemTemplate>
-        </ListView>
-            <Button Name="BtnDelete" Margin="0,20,0,0" Content="Delete selected files" Click="BtnDelete_Click"/>
-        </StackPanel>
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="{Binding Name}"></TextBlock>
+                        </StackPanel>
+                    </DataTemplate>
+                </ListView.ItemTemplate>
+            </ListView>
+            
+        </Grid>
     </Grid>
 </Page>
