@@ -1,5 +1,5 @@
 # ImageCleaner
-UWP App which cleans RAW files where beloning JPG doesn't exists anymore.
+UWP App which cleans RAW files where associated JPG doesn't exists anymore.
 
 ## How to use
 1. Start app
