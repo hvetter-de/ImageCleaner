@@ -4,4 +4,36 @@
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:local="using:ImageCleaner">
 
+    <Application.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.ThemeDictionaries>
+                <ResourceDictionary x:Key="Light">
+                    <SolidColorBrush x:Key="CardBackgroundFillColorDefaultBrush" Color="#F6F6F6"/>
+                    <SolidColorBrush x:Key="CardStrokeColorDefaultBrush" Color="#E0E0E0"/>
+                    <SolidColorBrush x:Key="DividerStrokeColorDefaultBrush" Color="#D0D0D0"/>
+                </ResourceDictionary>
+                <ResourceDictionary x:Key="Dark">
+                    <SolidColorBrush x:Key="CardBackgroundFillColorDefaultBrush" Color="#2D2D2D"/>
+                    <SolidColorBrush x:Key="CardStrokeColorDefaultBrush" Color="#3D3D3D"/>
+                    <SolidColorBrush x:Key="DividerStrokeColorDefaultBrush" Color="#404040"/>
+                </ResourceDictionary>
+            </ResourceDictionary.ThemeDictionaries>
+
+            <!-- Card style for content panels -->
+            <Style x:Key="CardBorder" TargetType="Border">
+                <Setter Property="Background" Value="{ThemeResource CardBackgroundFillColorDefaultBrush}"/>
+                <Setter Property="BorderBrush" Value="{ThemeResource CardStrokeColorDefaultBrush}"/>
+                <Setter Property="BorderThickness" Value="1"/>
+                <Setter Property="CornerRadius" Value="8"/>
+                <Setter Property="Padding" Value="20"/>
+            </Style>
+
+            <!-- Icon button style -->
+            <Style x:Key="IconButtonStyle" TargetType="Button">
+                <Setter Property="Padding" Value="12,8"/>
+                <Setter Property="CornerRadius" Value="4"/>
+                <Setter Property="HorizontalAlignment" Value="Stretch"/>
+            </Style>
+        </ResourceDictionary>
+    </Application.Resources>
 </Application>

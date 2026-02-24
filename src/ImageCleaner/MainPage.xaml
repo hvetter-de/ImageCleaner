@@ -9,45 +9,277 @@
     Background="{ThemeResource ApplicationPageBackgroundThemeBrush}">
 
     <Grid>
-        <Grid.RowDefinitions>
-            <RowDefinition Height="*"/>
-            <RowDefinition Height="6*"/>
-            <RowDefinition Height="2*"/>
-        </Grid.RowDefinitions>
-        <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="*"/>
-            <ColumnDefinition Width="*"/>
-        </Grid.ColumnDefinitions>
-        <TextBlock TextWrapping="WrapWholeWords" Height="200" FontSize="30" Grid.Row="0" Grid.ColumnSpan="2">
-                This tool finds all RAW images in a specific folder and checks if for every RAW image there is a JPG file.
-                If not it will propose the RAW file for deletion.
-        </TextBlock>
-        <StackPanel Grid.Row="1" Grid.Column="0" Margin="50">
-            <Button Content="Select Folder"  Name="BtnSelectFolder" Click="BtnSelectFolder_Click"></Button>
-            <TextBox Name="TxtSelectedFolder" MaxHeight="50"></TextBox>
-            <CheckBox Name="ChkIncludeSubfolders" Margin="50,0,0,0" Content="Include Sub folders"></CheckBox>
-            <Button Name="BtnStart" Click="BtnStart_Click" Content="Start" HorizontalAlignment="Right" Margin="0,0,50,0"></Button>
-        </StackPanel>
-        <Grid BorderThickness="1" Grid.Row="1" Grid.RowSpan="2" Grid.Column="1">
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="2*"/>
-                <ColumnDefinition Width="*"/>
-            </Grid.ColumnDefinitions>
-            <StackPanel Grid.Row="0" Grid.Column="1"  >
-                <Button Content="Select All" Name="BtnSelectAll" HorizontalAlignment="Center" Margin="0,10,0,0" Click="BtnSelectAll_Click"></Button>
-                <Button Content="Clear" Name="BtnClear" HorizontalAlignment="Center" Margin="0,10,0,0" Click="BtnClear_Click"></Button>
-                <Button Name="BtnDelete" HorizontalAlignment="Left" Margin="10,50,0,0" Content="Delete" Click="BtnDelete_Click"/>
-            </StackPanel>
-            <ListView BorderThickness="1" Grid.Column="0" Name="LstItemsToDelete" IsMultiSelectCheckBoxEnabled="True" Header="Results" SelectionMode="Multiple">
-                <ListView.ItemTemplate>
-                    <DataTemplate>
-                        <StackPanel Orientation="Horizontal">
-                            <TextBlock Text="{Binding Name}"></TextBlock>
+        <!-- ============ Decorative background watermark ============ -->
+        <Canvas HorizontalAlignment="Right" VerticalAlignment="Bottom"
+                Margin="0,0,-40,40" Opacity="0.03" IsHitTestVisible="False">
+            <!-- Large camera shutter / aperture blades -->
+            <Path Fill="{ThemeResource SystemBaseHighColor}" Canvas.Left="0" Canvas.Top="0"
+                  Data="M200,50 L260,150 200,250 140,150 Z" RenderTransformOrigin="0.5,0.5">
+                <Path.RenderTransform><RotateTransform Angle="0"/></Path.RenderTransform>
+            </Path>
+            <Path Fill="{ThemeResource SystemBaseHighColor}"
+                  Data="M200,50 L260,150 200,250 140,150 Z" RenderTransformOrigin="0.5,0.5">
+                <Path.RenderTransform><RotateTransform Angle="60"/></Path.RenderTransform>
+            </Path>
+            <Path Fill="{ThemeResource SystemBaseHighColor}"
+                  Data="M200,50 L260,150 200,250 140,150 Z" RenderTransformOrigin="0.5,0.5">
+                <Path.RenderTransform><RotateTransform Angle="120"/></Path.RenderTransform>
+            </Path>
+            <Ellipse Width="120" Height="120" Canvas.Left="140" Canvas.Top="90"
+                     Fill="{ThemeResource ApplicationPageBackgroundThemeBrush}"/>
+        </Canvas>
+
+        <Grid Padding="32,0,32,32">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="*"/>
+            </Grid.RowDefinitions>
+
+            <!-- ============ Hero Header ============ -->
+            <Grid Grid.Row="0" Margin="-32,0,-32,24">
+                <Grid.Background>
+                    <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
+                        <GradientStop Color="#1A1A2E" Offset="0.0"/>
+                        <GradientStop Color="#16213E" Offset="0.5"/>
+                        <GradientStop Color="#0F3460" Offset="1.0"/>
+                    </LinearGradientBrush>
+                </Grid.Background>
+
+                <StackPanel Padding="40,28,40,28" Spacing="8">
+                    <!-- Logo + Title row -->
+                    <StackPanel Orientation="Horizontal" Spacing="14">
+                        <!-- Camera aperture logo -->
+                        <Grid Width="44" Height="44">
+                            <Ellipse Width="44" Height="44" StrokeThickness="2.5">
+                                <Ellipse.Stroke>
+                                    <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
+                                        <GradientStop Color="#E94560" Offset="0"/>
+                                        <GradientStop Color="#FF8A5C" Offset="1"/>
+                                    </LinearGradientBrush>
+                                </Ellipse.Stroke>
+                            </Ellipse>
+                            <FontIcon Glyph="&#xE722;" FontSize="22" Foreground="White"
+                                      HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Grid>
+                        <TextBlock Text="Image Cleaner"
+                                   FontSize="26" FontWeight="Bold"
+                                   Foreground="White"
+                                   VerticalAlignment="Center"/>
+                    </StackPanel>
+
+                    <!-- Subtitle / description -->
+                    <TextBlock Text="Find orphaned RAW files with no matching JPG and clean them up in one click."
+                               TextWrapping="Wrap"
+                               FontSize="14"
+                               Foreground="#99FFFFFF"
+                               MaxWidth="600"
+                               HorizontalAlignment="Left"/>
+                </StackPanel>
+            </Grid>
+
+            <!-- ============ Main Content ============ -->
+            <Grid x:Name="ContentGrid" Grid.Row="1">
+                <VisualStateManager.VisualStateGroups>
+                    <VisualStateGroup x:Name="LayoutStates">
+                        <VisualState x:Name="WideState">
+                            <VisualState.StateTriggers>
+                                <AdaptiveTrigger MinWindowWidth="720"/>
+                            </VisualState.StateTriggers>
+                            <VisualState.Setters>
+                                <Setter Target="SettingsCard.(Grid.Column)" Value="0"/>
+                                <Setter Target="SettingsCard.(Grid.Row)" Value="0"/>
+                                <Setter Target="SettingsCard.(Grid.ColumnSpan)" Value="1"/>
+                                <Setter Target="ResultsCard.(Grid.Column)" Value="1"/>
+                                <Setter Target="ResultsCard.(Grid.Row)" Value="0"/>
+                                <Setter Target="ResultsCard.(Grid.RowSpan)" Value="1"/>
+                                <Setter Target="ResultsCard.(Grid.ColumnSpan)" Value="1"/>
+                                <Setter Target="ResultsCard.Margin" Value="16,0,0,0"/>
+                            </VisualState.Setters>
+                        </VisualState>
+                        <VisualState x:Name="NarrowState">
+                            <VisualState.StateTriggers>
+                                <AdaptiveTrigger MinWindowWidth="0"/>
+                            </VisualState.StateTriggers>
+                            <VisualState.Setters>
+                                <Setter Target="SettingsCard.(Grid.Column)" Value="0"/>
+                                <Setter Target="SettingsCard.(Grid.Row)" Value="0"/>
+                                <Setter Target="SettingsCard.(Grid.ColumnSpan)" Value="2"/>
+                                <Setter Target="ResultsCard.(Grid.Column)" Value="0"/>
+                                <Setter Target="ResultsCard.(Grid.Row)" Value="1"/>
+                                <Setter Target="ResultsCard.(Grid.RowSpan)" Value="1"/>
+                                <Setter Target="ResultsCard.(Grid.ColumnSpan)" Value="2"/>
+                                <Setter Target="ResultsCard.Margin" Value="0,16,0,0"/>
+                            </VisualState.Setters>
+                        </VisualState>
+                    </VisualStateGroup>
+                </VisualStateManager.VisualStateGroups>
+
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="*"/>
+                </Grid.RowDefinitions>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" MinWidth="260"/>
+                    <ColumnDefinition Width="2*"/>
+                </Grid.ColumnDefinitions>
+
+                <!-- ====== Settings Card ====== -->
+                <Border x:Name="SettingsCard" Style="{StaticResource CardBorder}"
+                        Grid.Row="0" Grid.Column="0">
+                    <StackPanel Spacing="14">
+                        <!-- Section header with icon -->
+                        <StackPanel Orientation="Horizontal" Spacing="8">
+                            <FontIcon Glyph="&#xE713;" FontSize="18"
+                                      Foreground="{ThemeResource SystemAccentColor}"/>
+                            <TextBlock Text="Settings"
+                                       FontSize="18" FontWeight="SemiBold"/>
                         </StackPanel>
-                    </DataTemplate>
-                </ListView.ItemTemplate>
-            </ListView>
-            
+
+                        <Rectangle Height="1" Fill="{ThemeResource DividerStrokeColorDefaultBrush}"
+                                   Margin="0,2,0,4"/>
+
+                        <!-- Folder picker -->
+                        <TextBlock Text="Source folder" FontSize="12"
+                                   Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}"/>
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            <TextBox Name="TxtSelectedFolder"
+                                     Grid.Column="0"
+                                     PlaceholderText="No folder selected"
+                                     IsReadOnly="True"
+                                     CornerRadius="4,0,0,4"/>
+                            <Button Grid.Column="1"
+                                    Name="BtnSelectFolder"
+                                    Click="BtnSelectFolder_Click"
+                                    CornerRadius="0,4,4,0"
+                                    VerticalAlignment="Stretch"
+                                    Padding="12,0">
+                                <StackPanel Orientation="Horizontal" Spacing="6">
+                                    <FontIcon Glyph="&#xED25;" FontSize="14"/>
+                                    <TextBlock Text="Browse" VerticalAlignment="Center"/>
+                                </StackPanel>
+                            </Button>
+                        </Grid>
+
+                        <CheckBox Name="ChkIncludeSubfolders"
+                                  Content="Include subfolders"
+                                  Margin="0,4,0,0"/>
+
+                        <Rectangle Height="1" Fill="{ThemeResource DividerStrokeColorDefaultBrush}"
+                                   Margin="0,4,0,4"/>
+
+                        <!-- Start button -->
+                        <Button Name="BtnStart"
+                                Click="BtnStart_Click"
+                                Style="{ThemeResource AccentButtonStyle}"
+                                HorizontalAlignment="Stretch"
+                                Padding="0,10"
+                                CornerRadius="4">
+                            <StackPanel Orientation="Horizontal" Spacing="8">
+                                <FontIcon Glyph="&#xE9D9;" FontSize="16" Foreground="White"/>
+                                <TextBlock Text="Start Scan" FontWeight="SemiBold"
+                                           VerticalAlignment="Center"/>
+                            </StackPanel>
+                        </Button>
+
+                        <!-- Decorative mini illustration -->
+                        <StackPanel Margin="0,12,0,0" Opacity="0.15"
+                                    HorizontalAlignment="Center" Spacing="4">
+                            <FontIcon Glyph="&#xEB9F;" FontSize="48"/>
+                            <TextBlock Text="RAW → JPG" FontSize="11"
+                                       HorizontalAlignment="Center"/>
+                        </StackPanel>
+                    </StackPanel>
+                </Border>
+
+                <!-- ====== Results Card ====== -->
+                <Border x:Name="ResultsCard" Style="{StaticResource CardBorder}"
+                        Grid.Row="0" Grid.Column="1"
+                        Margin="16,0,0,0">
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="*"/>
+                            <RowDefinition Height="Auto"/>
+                        </Grid.RowDefinitions>
+
+                        <!-- Section header with icon -->
+                        <StackPanel Grid.Row="0" Orientation="Horizontal" Spacing="8"
+                                    Margin="0,0,0,12">
+                            <FontIcon Glyph="&#xE9F9;" FontSize="18"
+                                      Foreground="{ThemeResource SystemAccentColor}"/>
+                            <TextBlock Text="Results"
+                                       FontSize="18" FontWeight="SemiBold"/>
+                        </StackPanel>
+
+                        <ListView Grid.Row="1"
+                                  Name="LstItemsToDelete"
+                                  IsMultiSelectCheckBoxEnabled="True"
+                                  SelectionMode="Multiple"
+                                  BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                                  BorderThickness="1"
+                                  CornerRadius="4"
+                                  MinHeight="180"
+                                  Padding="4">
+                            <ListView.ItemTemplate>
+                                <DataTemplate>
+                                    <StackPanel Orientation="Horizontal" Spacing="8" Padding="4,2">
+                                        <FontIcon Glyph="&#xE91B;" FontSize="14"
+                                                  Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}"/>
+                                        <TextBlock Text="{Binding Name}" VerticalAlignment="Center"/>
+                                    </StackPanel>
+                                </DataTemplate>
+                            </ListView.ItemTemplate>
+                        </ListView>
+
+                        <!-- Action buttons -->
+                        <Grid Grid.Row="2" Margin="0,14,0,0">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+
+                            <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="8">
+                                <Button Name="BtnSelectAll"
+                                        Click="BtnSelectAll_Click"
+                                        CornerRadius="4" Padding="12,8">
+                                    <StackPanel Orientation="Horizontal" Spacing="6">
+                                        <FontIcon Glyph="&#xE8FB;" FontSize="13"/>
+                                        <TextBlock Text="Select All" VerticalAlignment="Center"/>
+                                    </StackPanel>
+                                </Button>
+                                <Button Name="BtnClear"
+                                        Click="BtnClear_Click"
+                                        CornerRadius="4" Padding="12,8">
+                                    <StackPanel Orientation="Horizontal" Spacing="6">
+                                        <FontIcon Glyph="&#xE894;" FontSize="13"/>
+                                        <TextBlock Text="Clear" VerticalAlignment="Center"/>
+                                    </StackPanel>
+                                </Button>
+                            </StackPanel>
+
+                            <Button Grid.Column="2"
+                                    Name="BtnDelete"
+                                    Click="BtnDelete_Click"
+                                    CornerRadius="4" Padding="16,8">
+                                <Button.Background>
+                                    <SolidColorBrush Color="#C42B1C"/>
+                                </Button.Background>
+                                <StackPanel Orientation="Horizontal" Spacing="8">
+                                    <FontIcon Glyph="&#xE74D;" FontSize="14" Foreground="White"/>
+                                    <TextBlock Text="Delete Selected"
+                                               Foreground="White" FontWeight="SemiBold"
+                                               VerticalAlignment="Center"/>
+                                </StackPanel>
+                            </Button>
+                        </Grid>
+                    </Grid>
+                </Border>
+            </Grid>
         </Grid>
     </Grid>
 </Page>
